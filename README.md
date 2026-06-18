@@ -2,7 +2,13 @@
 
 Self-hosted RustDesk Server OSS for `rust.npi.msk.ru` on host `10.233.100.123`.
 
-This host runs the native Debian packages, not Docker. Docker cannot run containers in this environment because `runc` cannot mount `/proc`.
+Canonical client path: every client uses the public name `rust.npi.msk.ru`, without split DNS or local exceptions.
+
+```text
+rust.npi.msk.ru -> 79.137.227.154
+```
+
+The RustDesk server itself is configured to resolve through the default DNS from the network (`10.233.100.1`), so it sees the same public name.
 
 ## Services
 
@@ -13,9 +19,12 @@ This host runs the native Debian packages, not Docker. Docker cannot run contain
 
 ```ini
 [Service]
+Environment=ALWAYS_USE_RELAY=Y
 ExecStart=
 ExecStart=/usr/bin/hbbs -r rust.npi.msk.ru:21117
 ```
+
+`ALWAYS_USE_RELAY=Y` avoids direct P2P paths through mixed tunnels/proxies and routes sessions through `hbbr` instead.
 
 Runtime data and RustDesk keys live in:
 
@@ -31,10 +40,10 @@ Logs live in:
 
 ## Ports
 
-Forward these ports directly to `10.233.100.123`:
+Forward these ports from `79.137.227.154` to `10.233.100.123`:
 
 - `21115/tcp` - NAT type test
-- `21116/tcp` - TCP hole punching / connection service
+- `21116/tcp` - TCP rendezvous / connection service
 - `21116/udp` - ID registration / heartbeat
 - `21117/tcp` - relay service
 
@@ -47,10 +56,11 @@ Optional web client ports:
 
 ## Client Settings
 
-Use these RustDesk client network settings:
+Use these RustDesk client network settings everywhere:
 
 - ID Server: `rust.npi.msk.ru`
-- Relay Server: empty, or `rust.npi.msk.ru`
+- Relay Server: `rust.npi.msk.ru`
+- API Server: empty
 - Key: contents of `/var/lib/rustdesk-server/id_ed25519.pub`
 
 Current server public key:
@@ -61,33 +71,21 @@ RoyN02+A6vR5lOyDU6UDF5ON7Fd38lCnRGw95+8AQbM=
 
 RustDesk Server OSS does not use HTTPS/TLS on the domain. Clients verify the server using this RustDesk public key.
 
+## Gateway NAT
+
+Port forwarding is not a DNS feature. Apply NAT on the gateway that owns `79.137.227.154`:
+
+- nftables template: `gateway/nftables-rustdesk.nft`
+- iptables template: `gateway/iptables-rustdesk.sh`
+
+For MikroTik, the equivalent is dst-nat for the TCP ports above and UDP `21116` to `10.233.100.123`.
+
 ## Useful Commands
 
 ```bash
 systemctl status rustdesk-hbbs.service rustdesk-hbbr.service --no-pager -l
 journalctl -u rustdesk-hbbs.service -u rustdesk-hbbr.service -n 100 --no-pager
 ss -lntup | grep -E "2111[5-9]|hbbs|hbbr"
+tail -n 100 /var/log/rustdesk-server/hbbs.log
+tail -n 100 /var/log/rustdesk-server/hbbr.log
 ```
-
-## Gateway NAT
-
-DNS should point `rust.npi.msk.ru` to `79.137.227.154`.
-
-Port forwarding is not a DNS feature. Apply NAT on the gateway that owns `79.137.227.154` / `10.233.100.1`:
-
-- nftables template: `gateway/nftables-rustdesk.nft`
-- iptables template: `gateway/iptables-rustdesk.sh`
-
-The NAT rules include hairpin NAT, so clients inside `10.233.100.0/24` can also use `rust.npi.msk.ru` through the public IP.
-
-## Internal DNS
-
-Internal/tunnel clients should use DNS server `10.233.100.101`.
-
-That DNS server resolves:
-
-```text
-rust.npi.msk.ru -> 10.233.100.123
-```
-
-The RustDesk host itself is configured to use `10.233.100.101` via `/etc/resolv.conf` and `/etc/dhcp/dhclient.conf`.
