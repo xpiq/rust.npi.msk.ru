@@ -1,0 +1,23 @@
+#!/usr/sbin/nft -f
+
+# Apply on the NAT gateway that owns 79.137.227.154 / 10.233.100.1.
+# RustDesk server host: 10.233.100.123.
+
+flush table ip rustdesk_nat
+
+table ip rustdesk_nat {
+  chain prerouting {
+    type nat hook prerouting priority dstnat; policy accept;
+
+    ip daddr 79.137.227.154 tcp dport { 21115, 21116, 21117, 21118, 21119 } dnat to 10.233.100.123
+    ip daddr 79.137.227.154 udp dport 21116 dnat to 10.233.100.123
+  }
+
+  chain postrouting {
+    type nat hook postrouting priority srcnat; policy accept;
+
+    # Hairpin NAT: lets clients from 10.233.100.0/24 use rust.npi.msk.ru via the public IP too.
+    ip saddr 10.233.100.0/24 ip daddr 10.233.100.123 tcp dport { 21115, 21116, 21117, 21118, 21119 } masquerade
+    ip saddr 10.233.100.0/24 ip daddr 10.233.100.123 udp dport 21116 masquerade
+  }
+}

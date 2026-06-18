@@ -68,3 +68,14 @@ systemctl status rustdesk-hbbs.service rustdesk-hbbr.service --no-pager -l
 journalctl -u rustdesk-hbbs.service -u rustdesk-hbbr.service -n 100 --no-pager
 ss -lntup | grep -E "2111[5-9]|hbbs|hbbr"
 ```
+
+## Gateway NAT
+
+DNS should point `rust.npi.msk.ru` to `79.137.227.154`.
+
+Port forwarding is not a DNS feature. Apply NAT on the gateway that owns `79.137.227.154` / `10.233.100.1`:
+
+- nftables template: `gateway/nftables-rustdesk.nft`
+- iptables template: `gateway/iptables-rustdesk.sh`
+
+The NAT rules include hairpin NAT, so clients inside `10.233.100.0/24` can also use `rust.npi.msk.ru` through the public IP.
