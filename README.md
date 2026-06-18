@@ -79,3 +79,15 @@ Port forwarding is not a DNS feature. Apply NAT on the gateway that owns `79.137
 - iptables template: `gateway/iptables-rustdesk.sh`
 
 The NAT rules include hairpin NAT, so clients inside `10.233.100.0/24` can also use `rust.npi.msk.ru` through the public IP.
+
+## Internal DNS
+
+Internal/tunnel clients should use DNS server `10.233.100.101`.
+
+That DNS server resolves:
+
+```text
+rust.npi.msk.ru -> 10.233.100.123
+```
+
+The RustDesk host itself is configured to use `10.233.100.101` via `/etc/resolv.conf` and `/etc/dhcp/dhclient.conf`.
