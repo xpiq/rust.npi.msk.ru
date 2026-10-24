@@ -1,0 +1,9 @@
+/var/log/rustdesk-server/*.log /var/log/rustdesk-server/*.error {
+    weekly
+    rotate 8
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+}

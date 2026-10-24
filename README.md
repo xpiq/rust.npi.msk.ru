@@ -89,3 +89,9 @@ ss -lntup | grep -E "2111[5-9]|hbbs|hbbr"
 tail -n 100 /var/log/rustdesk-server/hbbs.log
 tail -n 100 /var/log/rustdesk-server/hbbr.log
 ```
+
+## Installed Version
+
+Installed server version: .
+
+A container-compatible  override and RustDesk rotation policy are stored in  and .
