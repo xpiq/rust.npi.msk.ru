@@ -92,6 +92,6 @@ tail -n 100 /var/log/rustdesk-server/hbbr.log
 
 ## Installed Version
 
-Installed server version: .
+Installed server version: 1.1.16.
 
-A container-compatible  override and RustDesk rotation policy are stored in  and .
+A container-compatible logrotate override and RustDesk rotation policy are stored in systemd/logrotate.container.conf and logrotate/rustdesk-server.
